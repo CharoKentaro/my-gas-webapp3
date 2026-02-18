@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <title>恋のオラクル AI恋星譚</title>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <style>
+        /* CSSは以前のまま変更ありません */
+        :root {
+            --primary-color: #ff69b4;
+            --background-color: #fff0f5;
+            --text-color: #333;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 700px;
+            width: 100%;
+            background: white;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            position: relative;
+        }
+        h1, h2, h3 { color: var(--primary-color); text-align: center; transition: color 0.3s; }
+        h1 { font-size: 2em; }
+        h2 { font-size: 1.5em; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; margin-top: 30px; transition: border-color 0.3s; }
+        /* 画面表示用にh3のスタイルを調整 */
+        .result-content h3 { 
+            text-align: left; 
+            font-size: 1.3em; 
+            margin-top: 25px; 
+            border-bottom: 1px solid var(--primary-color);
+            opacity: 0.6;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        button:hover { opacity: 0.8; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; opacity: 1; }
+        .hidden { display: none; }
+        
+        /* 結果表示エリア */
+        #result-area, #chart-container { 
+            margin-top: 20px; 
+            padding: 20px; 
+            background: #f9f9f9; 
+            border-radius: var(--border-radius); 
+            white-space: pre-wrap; 
+            word-wrap: break-word;
+            line-height: 1.65; 
+            font-size: 1.05em;
+        }
+        /* HTML側の強調表示（グラデーション） */
+        #result-area strong {
+            background: linear-gradient(transparent 70%, var(--primary-color) 70%);
+            font-weight: bold;
+            padding: 0 2px;
+            opacity: 0.5; /* 少し薄くして読みやすく */
+        }
+        
+        #logout-button {
+            position: static; 
+            width: 100%; 
+            margin-top: 30px;
+            padding: 12px;
+            background-color: #999;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.0em;
+            font-weight: bold;
+            cursor: pointer;
+            top: auto; right: auto; box-shadow: none; z-index: auto;
+        }
+        #logout-button:hover { background-color: #666; }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error-message { color: red; font-weight: bold; text-align: center; margin: 10px 0; }
+        .success-message { color: green; font-weight: bold; text-align: center; margin: 10px 0; }
+        
+        .accordion {
+            cursor: pointer;
+            padding: 10px;
+            width: 100%;
+            text-align: left;
+            border: none;
+            outline: none;
+            transition: 0.4s;
+            background-color: #eee;
+            color: #444;
+            font-weight: bold;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .accordion:after {
+            content: '\002B';
+            color: #777;
+            font-weight: bold;
+            float: right;
+            margin-left: 5px;
+        }
+        .active:after { content: "\2212"; }
+        .panel {
+            padding: 0 10px;
+            background-color: white;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.2s ease-out;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌙 恋のオラクル AI恋星譚</h1>
+        <p style="text-align:center;">- 心の羅針盤 Edition -</p>
+        <hr>
+
+        <div id="api-key-screen" class="hidden">
+            <h2>🔮 AI鑑定師との接続設定</h2>
+            <p style="font-size:0.9em; color:#666;">
+                鑑定に使用するAPIキーと、ご自身のメールアドレスを登録してください。<br>
+                この情報はブラウザに保存され、次回以降の入力が不要になります。
+            </p>
+            <input type="email" id="setup-email" placeholder="あなたのGmailアドレス (例: user@gmail.com)" style="margin-bottom: 10px;">
+            <input type="password" id="api-key" placeholder="Gemini APIキーをここに貼り付けてください">
+            <button id="api-key-button">設定を保存して始める</button>
+            <p id="api-key-message" class="error-message hidden"></p>
+        </div>
+        
+        <div id="main-app-screen" class="hidden">
+            <p class="success-message">✨ AI鑑定師との接続が完了しました！</p>
+            
+            <h2>Step 1: 鑑定の準備</h2>
+            <!-- キャラクター選択時に色を変えるイベントを追加 -->
+            <select id="character" onchange="updateThemeColor()">
+                <option value="sister">1. 優しく包み込む、お姉さん系</option>
+                <option value="logical">2. ロジカルに鋭く分析する、専門家系</option>
+                <option value="mysterious">3. 星の言葉で語る、ミステリアスな占い師系</option>
+            </select>
+            <select id="tone">
+                <option>癒し 100%</option>
+                <option selected>癒し 50% × 論理 50%</option>
+                <option>冷静にロジカル</option>
+            </select>
+            <input type="text" id="your-name" placeholder="あなたのLINEでの名前 (例: さくら)">
+            <input type="text" id="partner-name" placeholder="お相手のLINEでの名前 (例: たくや)">
+            <textarea id="counseling-text" rows="4" placeholder="今回、お相手との関係で特にどんなことが気になりますか？（例）最近、返信が遅い…"></textarea>
+            
+            <h2>Step 2: トーク履歴を読み込む</h2>
+            
+            <div style="background: #e6f7ff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #91d5ff;">
+                <h3 style="font-size: 1.1em; margin-top:0; color:#0050b3;">📧 メールから読み込む（推奨）</h3>
+                <p style="font-size: 0.9em; margin-bottom: 10px;">
+                    スマホのLINEから履歴を<strong>「あなたご自身のGmailアドレス」</strong>へ送信してください。<br>
+                    <span style="color:#666; font-size:0.8em;">(※自分から自分へメールを送る形になります)</span>
+                    <br><br>
+                    その後、下のボタンを押すと、履歴が自動的に反映されます。
+                    <br>
+                    <span style="color: #d63031; font-size: 0.8em;">※プライバシー保護のため、読み込み直後にメールはゴミ箱へ移動（または削除）されます。</span>
+                </p>
+                
+                <button id="fetch-mail-button" style="background-color: #1890ff; width: 100%; white-space: nowrap;">📩 LINEトーク履歴を探して読み込む</button>
+                <p style="font-size:0.8em; color:#666; margin-top:5px;">※あなたのメールボックスにある、最新の「[LINE]」ファイル添付メールを自動で探します。</p>
+                <p id="fetch-message" class="error-message hidden" style="text-align: left; margin-top: 5px;"></p>
+            </div>
+
+            <button class="accordion">または、テキストを手動で貼り付ける</button>
+            <div class="panel">
+                <p style="font-size:0.9em; color:#666; margin-top:10px;">メール送信がうまくいかない場合などは、こちらに直接貼り付けてください。</p>
+                <textarea id="talk-data" rows="10" placeholder="ここにLINEのトーク履歴を貼り付けてください"></textarea>
+            </div>
+            
+            <button id="diagnose-button" style="margin-top:20px;">🔮 鑑定を開始する</button>
+            
+            <button id="logout-button" class="hidden">🚪 設定リセット(ログアウト)</button>
+
+            <div id="loading" class="hidden">
+                <div class="spinner"></div>
+                <p style="text-align:center;">星々からのメッセージを読み解いています...✨</p>
+            </div>
+
+            <div id="result-container" class="hidden">
+                <h2>🌟 鑑定結果 🌟</h2>
+                <div id="chart-container"></div>
+                <div id="result-area" class="result-content"></div>
+                <button id="pdf-button" class="hidden">📄 鑑定書をPDFでダウンロード</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUserId = 'Owner'; 
+        let currentAiResponse = ''; 
+        let currentCharacter = '';
+        
+        // ★グラフ画像の取得用
+        let currentChartObject = null;
+        let currentChartData = null;
+        let currentChartOptions = null;
+
+        const apiKeyScreen = document.getElementById('api-key-screen');
+        const mainAppScreen = document.getElementById('main-app-screen');
+        const loadingSpinner = document.getElementById('loading');
+        const resultContainer = document.getElementById('result-container');
+        const resultArea = document.getElementById('result-area');
+        const chartContainer = document.getElementById('chart-container');
+        const logoutButton = document.getElementById('logout-button');
+        
+        document.getElementById('api-key-button').addEventListener('click', handleApiKey);
+        document.getElementById('diagnose-button').addEventListener('click', handleDiagnosis);
+        document.getElementById('pdf-button').addEventListener('click', handlePdfDownload);
+        logoutButton.addEventListener('click', handleLogout);
+
+        // 色変更ロジック
+        function updateThemeColor() {
+            const select = document.getElementById('character');
+            const text = select.options[select.selectedIndex].text;
+            let color = "#ff69b4"; // Default Pink
+            let bgColor = "#fff0f5";
+
+            if (text.includes("ロジカル")) {
+                color = "#1e90ff"; // Blue
+                bgColor = "#f0f8ff";
+            } else if (text.includes("ミステリアス")) {
+                color = "#9370db"; // Purple
+                bgColor = "#f8f0ff";
+            }
+
+            // CSS変数を書き換えて即時反映
+            document.documentElement.style.setProperty('--primary-color', color);
+            document.documentElement.style.setProperty('--background-color', bgColor);
+        }
+
+        function parseMarkdown(text) {
+            if (!text) return "";
+            let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            html = html.replace(/^\s*#+\s+(.*$)/gm, '<h3>$1</h3>');
+            html = html.replace(/^\s*\*\*(.*?)\*\*\s*[:：]?\s*$/gm, '<h3>$1</h3>');
+            html = html.replace(/^\s*[\*\-]\s+/gm, '・');
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/^\s*#+\s+/gm, '');
+            html = html.replace(/\n/g, '<br>');
+            return html;
+        }
+
+        const acc = document.getElementsByClassName("accordion");
+        for (let i = 0; i < acc.length; i++) {
+            acc[i].addEventListener("click", function() {
+                this.classList.toggle("active");
+                const panel = this.nextElementSibling;
+                if (panel.style.maxHeight) {
+                    panel.style.maxHeight = null;
+                } else {
+                    panel.style.maxHeight = panel.scrollHeight + "px";
+                } 
+            });
+        }
+
+        document.getElementById('fetch-mail-button').addEventListener('click', function() {
+            const msgArea = document.getElementById('fetch-message');
+            const btn = document.getElementById('fetch-mail-button');
+            const textarea = document.getElementById('talk-data');
+            const accordionBtn = document.querySelector('.accordion');
+            const panel = document.querySelector('.panel');
+            const email = "dummy";
+
+            msgArea.classList.add('hidden');
+            btn.disabled = true;
+            btn.textContent = "探しています...";
+
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    btn.disabled = false;
+                    btn.textContent = "📩 LINEトーク履歴を探して読み込む";
+                    if (response.success) {
+                        textarea.value = response.text;
+                        msgArea.textContent = "✅ 成功！メールからトーク履歴を読み込みました。";
+                        msgArea.style.color = "green";
+                        msgArea.classList.remove('hidden');
+                        if (!accordionBtn.classList.contains("active")) {
+                            accordionBtn.classList.add("active");
+                            panel.style.maxHeight = panel.scrollHeight + "px";
+                        }
+                    } else {
+                        msgArea.textContent = "⚠️ " + response.message;
+                        msgArea.style.color = "red";
+                        msgArea.classList.remove('hidden');
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    btn.disabled = false;
+                    btn.textContent = "📩 LINEトーク履歴を探して読み込む";
+                    alert("システムエラー: " + err);
+                })
+                .fetchHistoryFromGmail(email);
+        });
+
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedApiKey = localStorage.getItem('koi_apiKey');
+            const savedEmail = localStorage.getItem('koi_email');
+            
+            if (savedEmail && document.getElementById('setup-email')) {
+                document.getElementById('setup-email').value = savedEmail;
+            }
+
+            if (savedApiKey) {
+                google.script.run.testAndSaveApiKey(savedApiKey);
+                showScreen(mainAppScreen);
+            } else {
+                showScreen(apiKeyScreen);
+            }
+        });
+
+        function showScreen(screen) {
+            apiKeyScreen.classList.add('hidden');
+            mainAppScreen.classList.add('hidden');
+            screen.classList.remove('hidden');
+            if (screen === mainAppScreen || screen === apiKeyScreen) {
+                logoutButton.classList.remove('hidden');
+            } else {
+                logoutButton.classList.add('hidden');
+            }
+        }
+
+        function showLoading(isLoading) {
+            loadingSpinner.classList.toggle('hidden', !isLoading);
+            document.getElementById('diagnose-button').disabled = isLoading;
+        }
+
+        function handleLogout() {
+            if(confirm('設定をリセットしますか？\n保存されたAPIキーとメールアドレスがブラウザから削除されます。')) {
+                localStorage.removeItem('koi_apiKey');
+                localStorage.removeItem('koi_email');
+                
+                // ★追加: サーバー側のデータも消す (Foundation経由)
+                google.script.run.withSuccessHandler(function() {
+                    location.reload();
+                }).clearAllData();
+            }
+        }
+        
+        function handleApiKey() {
+            const apiKeyInput = document.getElementById('api-key');
+            const emailInput = document.getElementById('setup-email');
+            const apiKeyButton = document.getElementById('api-key-button');
+            const messageEl = document.getElementById('api-key-message');
+            const apiKeyValue = apiKeyInput.value.trim();
+            const emailValue = emailInput.value.trim();
+
+            if (!emailValue) {
+                messageEl.textContent = 'メールアドレスを入力してください。';
+                messageEl.classList.remove('hidden');
+                return;
+            }
+            if (!apiKeyValue) {
+                messageEl.textContent = 'APIキーを入力してください。';
+                messageEl.classList.remove('hidden');
+                return;
+            }
+            
+            messageEl.classList.add('hidden');
+            apiKeyInput.disabled = true;
+            emailInput.disabled = true;
+            apiKeyButton.disabled = true;
+            apiKeyButton.textContent = '設定中...';
+            
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        google.script.run.registerForEmailAnalysis(apiKeyValue, emailValue);
+                        localStorage.setItem('koi_apiKey', apiKeyValue);
+                        localStorage.setItem('koi_email', emailValue);
+                        showScreen(mainAppScreen);
+                    } else {
+                        messageEl.textContent = response.message || 'APIキーが無効です。';
+                        messageEl.classList.remove('hidden');
+                        apiKeyInput.disabled = false;
+                        emailInput.disabled = false;
+                        apiKeyButton.disabled = false;
+                        apiKeyButton.textContent = '設定を保存して始める';
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    messageEl.textContent = 'エラー: ' + err.message;
+                    messageEl.classList.remove('hidden');
+                    apiKeyInput.disabled = false;
+                    emailInput.disabled = false;
+                    apiKeyButton.disabled = false;
+                    apiKeyButton.textContent = '設定を保存して始める';
+                })
+                .testAndSaveApiKey(apiKeyValue);
+        }
+        
+        function handleDiagnosis() {
+            if (!document.getElementById('your-name').value || !document.getElementById('partner-name').value || !document.getElementById('talk-data').value) {
+                alert('名前とトーク履歴は必須です。');
+                return;
+            }
+
+            resultContainer.classList.add('hidden');
+            showLoading(true);
+
+            // キャラクター名を取得
+            const charSelect = document.getElementById('character');
+            currentCharacter = charSelect.options[charSelect.selectedIndex].text;
+
+            const formData = {
+                userId: currentUserId, 
+                character: currentCharacter,
+                tone: document.getElementById('tone').value,
+                yourName: document.getElementById('your-name').value,
+                partnerName: document.getElementById('partner-name').value,
+                counselingText: document.getElementById('counseling-text').value,
+                talkData: document.getElementById('talk-data').value,
+            };
+
+            google.script.run
+                .withSuccessHandler(onDiagnosisSuccess)
+                .withFailureHandler(onDiagnosisFailure)
+                .runDiagnosis(formData);
+        }
+
+        function handlePdfDownload() {
+            const btn = document.getElementById('pdf-button');
+            btn.textContent = 'PDFを生成中...';
+            btn.disabled = true;
+
+            // ★グラフ画像を取得してからGASへ送信
+            if (currentChartObject) {
+                const imgUri = currentChartObject.getImageURI();
+                // data:image/png;base64, を削除して純粋なBase64文字列にする
+                const base64Img = imgUri.replace("data:image/png;base64,", "");
+                
+                google.script.run
+                    .withSuccessHandler(onPdfSuccess)
+                    .withFailureHandler(onPdfFailure)
+                    .createPdfReport(currentAiResponse, currentCharacter, base64Img);
+            } else {
+                // グラフがない場合は画像なしで生成
+                google.script.run
+                    .withSuccessHandler(onPdfSuccess)
+                    .withFailureHandler(onPdfFailure)
+                    .createPdfReport(currentAiResponse, currentCharacter, null);
+            }
+        }
+
+        function onPdfSuccess(base64Pdf) {
+            const btn = document.getElementById('pdf-button');
+            const link = document.createElement('a');
+            link.href = 'data:application/pdf;base64,' + base64Pdf;
+            link.download = '恋の鑑定書.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            btn.textContent = '📄 鑑定書をPDFでダウンロード';
+            btn.disabled = false;
+        }
+
+        function onPdfFailure(err) {
+            alert('PDFの生成に失敗しました: ' + err);
+            const btn = document.getElementById('pdf-button');
+            btn.textContent = '📄 鑑定書をPDFでダウンロード';
+            btn.disabled = false;
+        }
+        
+        function onDiagnosisSuccess(result) {
+            showLoading(false);
+            if (result.success) {
+                currentAiResponse = result.aiResponse;
+                const formattedHtml = parseMarkdown(result.aiResponse);
+                resultArea.innerHTML = formattedHtml;
+                
+                resultContainer.classList.remove('hidden');
+                document.getElementById('pdf-button').classList.remove('hidden');
+
+                if (result.chartData && result.chartData.labels && result.chartData.labels.length > 0) {
+                    drawChart(result.chartData);
+                } else {
+                    chartContainer.innerHTML = ""; // データがない場合はクリア
+                    currentChartObject = null;
+                }
+            } else {
+                onDiagnosisFailure(result.error);
+            }
+        }
+
+        function onDiagnosisFailure(error) {
+            showLoading(false);
+            alert('鑑定中にエラーが発生しました: ' + error);
+        }
+
+        google.charts.load('current', {'packages':['corechart']});
+        
+        function drawChart(chartData) {
+            const dataForChart = [['日付', '温度']];
+            chartData.labels.forEach((label, index) => {
+                dataForChart.push([label, chartData.values[index]]);
+            });
+
+            const data = google.visualization.arrayToDataTable(dataForChart);
+            
+            // 現在のテーマカラーを取得
+            const color = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+
+            const options = {
+                title: '二人の恋の温度グラフ',
+                hAxis: { title: '日付', titleTextStyle: { color: '#333' } },
+                vAxis: { minValue: 0 },
+                legend: { position: 'none' },
+                colors: [color], // テーマカラーを適用
+                backgroundColor: 'transparent' // 背景透過
+            };
+            
+            const chartDiv = document.getElementById('chart-container');
+            currentChartObject = new google.visualization.AreaChart(chartDiv);
+            currentChartObject.draw(data, options);
+        }
+    </script>
+</body>
+</html>
