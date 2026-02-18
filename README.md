@@ -1,5 +1,13 @@
 # 恋のオラクル AI恋星譚 (Love Oracle: AI Romance Tale)
 
+## 🚀 ライブデモ
+実際に動作するアプリケーションはこちらからご確認いただけます：
+[**アプリを実行する ([Google Web App URL)](https://script.google.com/macros/s/AKfycbzDhoPQ_4dhrHB159IjEWkUY87yD3fDLAwM1JwZ-v4otXeuBzEj_khb_-jTyU5vGn3aHw/exec)**]
+
+> ※本アプリの実行には Google アカウントへのログインが必要です。
+> ※初回実行時に「このアプリは確認されていません」という警告が表示される場合がありますが、これはGASの仕様によるものです。「詳細」→「（アプリ名）に移動」を選択することで実行可能です。
+
+
 ## 概要
 LINEのトーク履歴をAIが心理学的に分析し、二人の「脈あり度」や「深層心理」を鑑定する、エンターテインメント型AI診断アプリケーションです。
 Google Apps Script (GAS) と Gemini API を統合し、プライバシーに配慮した設計となっています。
